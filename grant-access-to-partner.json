@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "5909324241755561320"
+    }
+  },
+  "parameters": {
+    "namespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing Event Hub namespace."
+      }
+    },
+    "policyName": {
+      "type": "string",
+      "defaultValue": "PartnerAccess",
+      "metadata": {
+        "description": "Name of the Shared Access Policy to create."
+      }
+    },
+    "rights": {
+      "type": "array",
+      "defaultValue": [
+        "Listen"
+      ],
+      "allowedValues": [
+        [
+          "Send"
+        ],
+        [
+          "Listen"
+        ],
+        [
+          "Send",
+          "Listen"
+        ]
+      ],
+      "metadata": {
+        "description": "Rights to grant to the partner (Send, Listen, or both)."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location of the Event Hub namespace."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventHub/namespaces/authorizationRules",
+      "apiVersion": "2022-10-01-preview",
+      "name": "[format('{0}/{1}', parameters('namespaceName'), parameters('policyName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "rights": "[parameters('rights')]"
+      }
+    }
+  ],
+  "outputs": {
+    "partnerInstructions": {
+      "type": "string",
+      "value": "Please send this connection string securely to the integration partner:"
+    },
+    "connectionString": {
+      "type": "string",
+      "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', split(format('{0}/{1}', parameters('namespaceName'), parameters('policyName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), parameters('policyName')), '/')[1]), '2022-10-01-preview').primaryConnectionString]"
+    }
+  }
+}
