@@ -65,6 +65,13 @@ Example:
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2F<username>%2F<repo>%2Fmain%2Fgrant-access-to-partner.json)
 
+Working example:
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](
+  https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FJeroen-Sturm%2FFooBar%2Fmain%2Fgrant-access-to-partner.json
+)
+
+
 * Click the button → Azure Portal opens → template preloaded.
 * Fill in parameters: `namespaceName`, `eventHubName`, `policyName`, `rights`, `webhookUrl` (optional).
 * Deploy → outputs connection string for the partner.
