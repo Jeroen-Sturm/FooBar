@@ -74,8 +74,13 @@ Working example:
 
 * Click the button → Azure Portal opens → template preloaded.
 * Fill in parameters: `namespaceName`, `eventHubName`, `policyName`, `rights`, `webhookUrl` (optional).
+  <img width="1222" height="830" alt="CleanShot 2025-10-23 at 14 00 57" src="https://github.com/user-attachments/assets/5800438b-bca3-4a02-926a-230139bbea44" />
+
 * Deploy → outputs connection string for the partner.
-* **Note:** Outputs tab is not shown by default — click it to view connection string.
+  <img width="1883" height="846" alt="CleanShot 2025-10-23 at 14 02 14" src="https://github.com/user-attachments/assets/b898b25f-da00-4c54-a955-06c883959e92" />
+
+* **Note:** Outputs tab is not shown by default — click it to view connection string. __please wait till deployment is completed__
+  <img width="1880" height="601" alt="CleanShot 2025-10-23 at 14 03 58" src="https://github.com/user-attachments/assets/3f793dee-08f1-4b66-9e9e-e15eac0752cc" />
 
 ---
 
