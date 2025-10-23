@@ -72,6 +72,5 @@ resource postToWebhook 'Microsoft.Resources/deploymentScripts@2020-10-01' = if (
 
 // Outputs
 output partnerInstructions string = 'If webhookUrl was empty, please copy the connection string below and send it securely to your integration partner.'
-@secure()
 output connectionString string = keys.primaryConnectionString
 output eventHubLocation string = eventHub.location

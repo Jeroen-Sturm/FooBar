@@ -1,12 +1,11 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "4427073549263203392"
+      "templateHash": "15403554591791531981"
     }
   },
   "parameters": {
@@ -55,20 +54,8 @@
       }
     }
   },
-  "resources": {
-    "namespace": {
-      "existing": true,
-      "type": "Microsoft.EventHub/namespaces",
-      "apiVersion": "2022-10-01-preview",
-      "name": "[parameters('namespaceName')]"
-    },
-    "eventHub": {
-      "existing": true,
-      "type": "Microsoft.EventHub/namespaces/eventhubs",
-      "apiVersion": "2022-10-01-preview",
-      "name": "[format('{0}/{1}', parameters('namespaceName'), parameters('eventHubName'))]"
-    },
-    "sasPolicy": {
+  "resources": [
+    {
       "type": "Microsoft.EventHub/namespaces/eventhubs/authorizationRules",
       "apiVersion": "2022-10-01-preview",
       "name": "[format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName'))]",
@@ -76,7 +63,7 @@
         "rights": "[parameters('rights')]"
       }
     },
-    "postToWebhook": {
+    {
       "condition": "[not(empty(parameters('webhookUrl')))]",
       "type": "Microsoft.Resources/deploymentScripts",
       "apiVersion": "2020-10-01",
@@ -99,22 +86,22 @@
         ]
       },
       "dependsOn": [
-        "sasPolicy"
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[1], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[2])]"
       ]
     }
-  },
+  ],
   "outputs": {
     "partnerInstructions": {
       "type": "string",
       "value": "If webhookUrl was empty, please copy the connection string below and send it securely to your integration partner."
     },
     "connectionString": {
-      "type": "securestring",
+      "type": "string",
       "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[1], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[2]), '2022-10-01-preview').primaryConnectionString]"
     },
     "eventHubLocation": {
       "type": "string",
-      "value": "[reference('eventHub', '2022-10-01-preview', 'full').location]"
+      "value": "[reference(resourceId('Microsoft.EventHub/namespaces/eventhubs', split(format('{0}/{1}', parameters('namespaceName'), parameters('eventHubName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), parameters('eventHubName')), '/')[1]), '2022-10-01-preview', 'full').location]"
     }
   }
 }
