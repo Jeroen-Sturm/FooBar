@@ -5,11 +5,11 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "16940828849001511977"
+      "templateHash": "13868188232519470310"
     }
   },
   "parameters": {
-    "namespaceName": {
+    "eventHubName": {
       "type": "string",
       "metadata": {
         "description": "Name of the existing Event Hub namespace."
@@ -29,9 +29,6 @@
       ],
       "allowedValues": [
         [
-          "Send"
-        ],
-        [
           "Listen"
         ],
         [
@@ -48,7 +45,7 @@
     {
       "type": "Microsoft.EventHub/namespaces/authorizationRules",
       "apiVersion": "2022-10-01-preview",
-      "name": "[format('{0}/{1}', parameters('namespaceName'), parameters('policyName'))]",
+      "name": "[format('{0}/{1}', parameters('eventHubName'), parameters('policyName'))]",
       "properties": {
         "rights": "[parameters('rights')]"
       }
@@ -61,11 +58,11 @@
     },
     "connectionString": {
       "type": "string",
-      "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', split(format('{0}/{1}', parameters('namespaceName'), parameters('policyName')), '/')[0], split(format('{0}/{1}', parameters('namespaceName'), parameters('policyName')), '/')[1]), '2022-10-01-preview').primaryConnectionString]"
+      "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[1]), '2022-10-01-preview').primaryConnectionString]"
     },
     "namespaceLocation": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.EventHub/namespaces', parameters('namespaceName')), '2022-10-01-preview', 'full').location]"
+      "value": "[reference(resourceId('Microsoft.EventHub/namespaces', parameters('eventHubName')), '2022-10-01-preview', 'full').location]"
     }
   }
 }
