@@ -31,9 +31,16 @@ resource sasPolicy 'Microsoft.EventHub/namespaces/authorizationRules@2022-10-01-
 // Retrieve connection string
 var keys = listKeys(sasPolicy.id, sasPolicy.apiVersion)
 
+// Build JSON payload safely
+var payload = {
+  partner: deployment().name
+  namespace: eventHubName
+  policy: policyName
+  rights: rights
+  connectionString: keys.primaryConnectionString
+}
 
-// NOTE I HAVE NOT TESTED THIS!!
-// Optional: Send the connection string to a webhook securely
+// Only run webhook script if webhookUrl is provided
 resource postToWebhook 'Microsoft.Resources/deploymentScripts@2020-10-01' = if (!empty(webhookUrl)) {
   name: 'SendSASKeyToWebhook'
   location: resourceGroup().location
@@ -41,19 +48,24 @@ resource postToWebhook 'Microsoft.Resources/deploymentScripts@2020-10-01' = if (
   properties: {
     azCliVersion: '2.30.0'
     scriptContent: '''
-      curl -X POST -H "Content-Type: application/json" -d '{
-        "partner": "${deployment().name}",
-        "namespace": "${eventHubName}",
-        "policy": "${policyName}",
-        "rights": "${join(rights, ', ')}",
-        "connectionString": "${keys.primaryConnectionString}"
-      }' "${webhookUrl}"
+      curl -X POST -H "Content-Type: application/json" -d "$PAYLOAD" "$WEBHOOK_URL"
     '''
     retentionInterval: 'PT1H'
+    environmentVariables: [
+      {
+        name: 'PAYLOAD'
+        value: string(payload)
+      }
+      {
+        name: 'WEBHOOK_URL'
+        value: webhookUrl
+      }
+    ]
   }
 }
 
-// Output instructions
+// Outputs
 output partnerInstructions string = 'If webhookUrl was empty, please copy the connection string below and send it securely to your integration partner.'
+@secure()
 output connectionString string = keys.primaryConnectionString
 output namespaceLocation string = namespace.location

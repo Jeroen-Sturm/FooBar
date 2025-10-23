@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "17287494749545505066"
+      "templateHash": "2623285439082717457"
     }
   },
   "parameters": {
@@ -48,8 +49,14 @@
       }
     }
   },
-  "resources": [
-    {
+  "resources": {
+    "namespace": {
+      "existing": true,
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2022-10-01-preview",
+      "name": "[parameters('eventHubName')]"
+    },
+    "sasPolicy": {
       "type": "Microsoft.EventHub/namespaces/authorizationRules",
       "apiVersion": "2022-10-01-preview",
       "name": "[format('{0}/{1}', parameters('eventHubName'), parameters('policyName'))]",
@@ -57,7 +64,7 @@
         "rights": "[parameters('rights')]"
       }
     },
-    {
+    "postToWebhook": {
       "condition": "[not(empty(parameters('webhookUrl')))]",
       "type": "Microsoft.Resources/deploymentScripts",
       "apiVersion": "2020-10-01",
@@ -66,23 +73,36 @@
       "kind": "AzureCLI",
       "properties": {
         "azCliVersion": "2.30.0",
-        "scriptContent": "      curl -X POST -H \"Content-Type: application/json\" -d '{\n        \"partner\": \"${deployment().name}\",\n        \"namespace\": \"${eventHubName}\",\n        \"policy\": \"${policyName}\",\n        \"rights\": \"${join(rights, ', ')}\",\n        \"connectionString\": \"${keys.primaryConnectionString}\"\n      }' \"${webhookUrl}\"\n    ",
-        "retentionInterval": "PT1H"
-      }
+        "scriptContent": "      curl -X POST -H \"Content-Type: application/json\" -d \"$PAYLOAD\" \"$WEBHOOK_URL\"\n    ",
+        "retentionInterval": "PT1H",
+        "environmentVariables": [
+          {
+            "name": "PAYLOAD",
+            "value": "[string(createObject('partner', deployment().name, 'namespace', parameters('eventHubName'), 'policy', parameters('policyName'), 'rights', parameters('rights'), 'connectionString', listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[1]), '2022-10-01-preview').primaryConnectionString))]"
+          },
+          {
+            "name": "WEBHOOK_URL",
+            "value": "[parameters('webhookUrl')]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "sasPolicy"
+      ]
     }
-  ],
+  },
   "outputs": {
     "partnerInstructions": {
       "type": "string",
       "value": "If webhookUrl was empty, please copy the connection string below and send it securely to your integration partner."
     },
     "connectionString": {
-      "type": "string",
+      "type": "securestring",
       "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[1]), '2022-10-01-preview').primaryConnectionString]"
     },
     "namespaceLocation": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.EventHub/namespaces', parameters('eventHubName')), '2022-10-01-preview', 'full').location]"
+      "value": "[reference('namespace', '2022-10-01-preview', 'full').location]"
     }
   }
 }
