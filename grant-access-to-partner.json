@@ -6,21 +6,27 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.33.27573",
-      "templateHash": "2623285439082717457"
+      "templateHash": "4427073549263203392"
     }
   },
   "parameters": {
+    "namespaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Select the Event Hub namespace containing the Event Hub instance."
+      }
+    },
     "eventHubName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the existing Event Hub namespace."
+        "description": "Select the specific Event Hub instance to grant access to."
       }
     },
     "policyName": {
       "type": "string",
       "defaultValue": "PartnerAccess",
       "metadata": {
-        "description": "Name of the Shared Access Policy to create."
+        "description": "Name of the Shared Access Policy to create. Only letters, numbers, and internal dashes allowed."
       }
     },
     "rights": {
@@ -45,7 +51,7 @@
       "type": "securestring",
       "defaultValue": "https://webhook.site/e318cb3e-c704-4ca4-b3e4-bdddf45591b9",
       "metadata": {
-        "description": "Optional: HTTPS webhook URL to send the SAS key securely (e.g. Logic App trigger URL). Leave blank to skip automatic sending."
+        "description": "Optional: HTTPS webhook URL to send the SAS key securely (e.g., Logic App trigger URL). Leave blank to skip automatic sending."
       }
     }
   },
@@ -54,12 +60,18 @@
       "existing": true,
       "type": "Microsoft.EventHub/namespaces",
       "apiVersion": "2022-10-01-preview",
-      "name": "[parameters('eventHubName')]"
+      "name": "[parameters('namespaceName')]"
+    },
+    "eventHub": {
+      "existing": true,
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "apiVersion": "2022-10-01-preview",
+      "name": "[format('{0}/{1}', parameters('namespaceName'), parameters('eventHubName'))]"
     },
     "sasPolicy": {
-      "type": "Microsoft.EventHub/namespaces/authorizationRules",
+      "type": "Microsoft.EventHub/namespaces/eventhubs/authorizationRules",
       "apiVersion": "2022-10-01-preview",
-      "name": "[format('{0}/{1}', parameters('eventHubName'), parameters('policyName'))]",
+      "name": "[format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName'))]",
       "properties": {
         "rights": "[parameters('rights')]"
       }
@@ -78,7 +90,7 @@
         "environmentVariables": [
           {
             "name": "PAYLOAD",
-            "value": "[string(createObject('partner', deployment().name, 'namespace', parameters('eventHubName'), 'policy', parameters('policyName'), 'rights', parameters('rights'), 'connectionString', listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[1]), '2022-10-01-preview').primaryConnectionString))]"
+            "value": "[string(createObject('partner', deployment().name, 'namespace', parameters('namespaceName'), 'eventHub', parameters('eventHubName'), 'policy', parameters('policyName'), 'rights', parameters('rights'), 'connectionString', listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[1], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[2]), '2022-10-01-preview').primaryConnectionString))]"
           },
           {
             "name": "WEBHOOK_URL",
@@ -98,11 +110,11 @@
     },
     "connectionString": {
       "type": "securestring",
-      "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}', parameters('eventHubName'), parameters('policyName')), '/')[1]), '2022-10-01-preview').primaryConnectionString]"
+      "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[0], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[1], split(format('{0}/{1}/{2}', parameters('namespaceName'), parameters('eventHubName'), parameters('policyName')), '/')[2]), '2022-10-01-preview').primaryConnectionString]"
     },
-    "namespaceLocation": {
+    "eventHubLocation": {
       "type": "string",
-      "value": "[reference('namespace', '2022-10-01-preview', 'full').location]"
+      "value": "[reference('eventHub', '2022-10-01-preview', 'full').location]"
     }
   }
 }
